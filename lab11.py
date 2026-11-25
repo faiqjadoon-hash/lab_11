@@ -11,30 +11,44 @@ import socket
 
 
 async def gather_doubled(numbers):
-    # Outline (write your plan here first):
-    #   ...
-    # TODO (Part 1, async): run one async task per number that returns n * 2, all
-    #   CONCURRENTLY with asyncio.gather, and return the results as a list in the same
-    #   order as `numbers`.
-    pass
+    # Outline:
+    #   1. One coroutine per number that returns n * 2
+    #   2. Run them all CONCURRENTLY with asyncio.gather(*coros)
+    #   3. gather preserves input order, so return the results as a list
+    async def double(n):
+        return n * 2
+
+    coros = [double(n) for n in numbers]
+    results = await asyncio.gather(*coros)
+    return list(results)
 
 
 async def fastest(jobs):
     # Outline:
-    #   ...
-    # TODO (Part 2, async): `jobs` is a list of (label, delay) pairs. Start them all
-    #   concurrently - each one just does `await asyncio.sleep(delay)` - and return the
-    #   label of the FIRST job to finish. (Hint: asyncio.as_completed.)
-    pass
+    #   1. One coroutine per (label, delay): await asyncio.sleep(delay); return label
+    #   2. Start them all concurrently with asyncio.as_completed(coros)
+    #   3. The first result yielded is the winner -> return its label
+    async def run_job(label, delay):
+        await asyncio.sleep(delay)
+        return label
+
+    coros = [run_job(label, delay) for label, delay in jobs]
+    for coro in asyncio.as_completed(coros):
+        return await coro
 
 
 def echo_once(host, port, message):
     # Outline:
-    #   ...
-    # TODO (Part 3, sockets): open a TCP socket and connect to (host, port). Send
-    #   `message` (encode it to bytes first), receive the server's reply, and return it
-    #   as a string. (Hint: socket.socket, .connect, .sendall, .recv, .decode.)
-    pass
+    #   1. Create a TCP socket (AF_INET, SOCK_STREAM)
+    #   2. Connect to (host, port)
+    #   3. sendall(message.encode())
+    #   4. data = recv(1024); return data.decode()
+    #   5. Use `with` so the socket is always closed
+    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
+        sock.connect((host, port))
+        sock.sendall(message.encode())
+        data = sock.recv(1024)
+        return data.decode()
 
 
 def main():
